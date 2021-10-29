@@ -1,6 +1,6 @@
 /*
  * File:   main.c
- * Author: Juuso Pyykkönen
+ * Author: Juuso Pyykkonen
  *
  * Created on October 29, 2021, 9:01 PM
  */
