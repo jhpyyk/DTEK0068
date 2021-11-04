@@ -54,16 +54,19 @@ int main(void) {
     
     while (1)
     {
+        // Infinite loop to halt the program when g_running is 0
         if (!g_running)
         {
-            return;
+            while(1)
+            {
+            }
         }
         
         if (number < 0)
         {
             // Disable interrupts until the whole number is shown
             cli();
-            
+
             // Toggle bits in display
             PORTC.OUTTGL = seven_segment_numbers[0];
             sei();
@@ -73,7 +76,7 @@ int main(void) {
         {
             // Disable interrupts until the whole number is shown
             cli();
-            
+
             // Set number on display
             PORTC.OUT = seven_segment_numbers[number];
             sei();
