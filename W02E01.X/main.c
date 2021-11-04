@@ -2,9 +2,9 @@
  * File:   main.c
  * Author: Juuso Pyykkönen
  * 
- * Excercise for a university course, DTEK0068
+ * Exercise for a university course, DTEK0068
  * 
- * Week 2 excercise 1, W02E01
+ * Week 2 exercise 1, W02E01
  * 
  * Program makes a 7-segment display count down from 9 to 0
  * in 1 second intervals. If the red wire connected to PA4
@@ -25,6 +25,7 @@
 volatile uint8_t g_running = 1;
 
 int main(void) {
+    
     // Set all pins in PORTC as outputs
     PORTC.DIRSET = (PIN0_bm | PIN1_bm | PIN2_bm | PIN3_bm
                     | PIN4_bm | PIN5_bm | PIN6_bm | PIN7_bm);
@@ -32,8 +33,7 @@ int main(void) {
     // Set PA4 as input
     PORTA.DIRCLR = PIN4_bm;
     
-    // Enable internal pull-up resistor for PA4
-    // and trigger interrupts on falling edge
+    // Trigger interrupt when PA4 is disconnected
     PORTA.PIN4CTRL = PORT_ISC_FALLING_gc;
     
     
@@ -63,6 +63,8 @@ int main(void) {
         {
             // Disable interrupts until the whole number is shown
             cli();
+            
+            // Toggle bits in display
             PORTC.OUTTGL = seven_segment_numbers[0];
             sei();
             _delay_ms(500);
@@ -71,6 +73,8 @@ int main(void) {
         {
             // Disable interrupts until the whole number is shown
             cli();
+            
+            // Set number on display
             PORTC.OUT = seven_segment_numbers[number];
             sei();
             _delay_ms(1000);
