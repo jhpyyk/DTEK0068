@@ -19,14 +19,6 @@
  * even though it differs from the wiring in this week's
  * exercise document. Seemed logical to use the already
  * working wiring.
- *
- * I think i would not have used the local counter in ISR
- * if it was not in the functional requirements.
- * I would have used the superloop to increment clockticks
- * and update the number when 8 clockticks have passed.
- * ISR would then have been only flagclear and code would
- * have better matched the "INTERRUPT DRIVEN SUPERLOOP ARCHITECTURE"
- * mentioned in this weeks materials. I might be in the wrong here though.
  * 
  * Created on November 10, 2021, 5:38 PM
  */
@@ -58,9 +50,6 @@ volatile uint8_t g_running = 1;
 // PIT counts seconds (clockticks) for superloop
 volatile uint8_t g_clockticks = 0;
 
-// 1 when digit display should update the digit
-volatile uint8_t g_update_display = 0;
-
 // Function for initializing real-time counter.
 // Copied from Microchip's documentation TB3213
 // and slightly modified
@@ -76,9 +65,9 @@ int main(void)
     set_sleep_mode(SLPCTRL_SMODE_IDLE_gc);
     
     // Countdown starts from 9
-    int8_t digit = 9;
+    int8_t seconds = 9;
     
-    // Setup pin configuration
+    // Pin configuration
     pin_setup();
     
     // Initialize real-time counter
@@ -100,18 +89,19 @@ int main(void)
         
         // Update the digit in display and decrease
         // the index for the next update
-        if (g_clockticks <= 10 && g_update_display)
+        // and reset clockticks
+        if (seconds >= 0 && g_clockticks == 8)
         {
-            PORTC.OUT = seven_segment_digits[digit];
-            digit--;
-            g_update_display = 0;
+            PORTC.OUT = seven_segment_digits[seconds];
+            seconds--;
+            g_clockticks = 0;
         }
         
         // Toggle the display on and off when countdown has reached 0
-        if (g_clockticks > 10 && g_update_display)
+        if (seconds < 0 && g_clockticks == 4)
         {
             PORTF.OUTTGL = PIN5_bm;
-            g_update_display = 0;
+            g_clockticks = 0;
         }
         sleep_mode();
     }
@@ -129,23 +119,12 @@ ISR(PORTA_PORT_vect)
 }
 
 // Periodic interrupt which triggers 8 times per second.
-// Counts seconds (clockticks) for the superloop.
+// Counts clockticks for the superloop.
 ISR(RTC_PIT_vect)
 {
     // Clear flag by writing '1'
     RTC.PITINTFLAGS = RTC_PI_bm;
-    
-    // Local counter to increase g_clockticks
-    // every 8 cycles (1 second)
-    static uint8_t counter = 0;
-    
-    if (counter == 8)
-    {
-        g_clockticks++;
-        g_update_display = 1;
-        counter = 0;
-    }
-    counter++;
+    g_clockticks++;
 }
 
 // Function to setup pin configuration
