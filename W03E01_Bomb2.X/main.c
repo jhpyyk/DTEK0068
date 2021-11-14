@@ -47,7 +47,7 @@ const uint8_t seven_segment_digits[] =
 // and 0 when countdown is halted
 volatile uint8_t g_running = 1;
 
-// PIT counts seconds (clockticks) for superloop
+// PIT counts clockticks for the superloop
 volatile uint8_t g_clockticks = 0;
 
 // Function for initializing real-time counter.
@@ -87,9 +87,8 @@ int main(void)
             }
         }
         
-        // Update the digit in display and decrease
-        // the index for the next update
-        // and reset clockticks
+        // Update the digit in display every 8 clockticks
+        // which is a 1 second interval.
         if (seconds >= 0 && g_clockticks == 8)
         {
             PORTC.OUT = seven_segment_digits[seconds];
@@ -98,6 +97,7 @@ int main(void)
         }
         
         // Toggle the display on and off when countdown has reached 0
+        // in half second intervals.
         if (seconds < 0 && g_clockticks == 4)
         {
             PORTF.OUTTGL = PIN5_bm;
