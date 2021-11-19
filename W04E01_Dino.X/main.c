@@ -140,7 +140,7 @@ int main(void)
         
         // Perform a jump when LDR value exceeds treshold value
         // and jumping is allowed
-        if (((ldr_value > treshold) && can_jump))
+        if ((ldr_value > treshold) && (can_jump))
         {
             jump();
         }
