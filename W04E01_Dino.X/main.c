@@ -6,7 +6,7 @@
  * 
  * Week 4 exercise 1, W04E01
  * 
- * Used for playing the chrome dino game (chrome://dino/) with and LDR and a
+ * Used for playing the chrome dino game (chrome://dino/) with an LDR and a
  * servo with an arm to press the spacebar. The LDR reacts to light level
  * changes which are cacti in this context. Servo arm then presses the spacebar
  * to perform a jump. A potentiometer is used for adjusting the jump treshold
@@ -14,9 +14,6 @@
  * 
  * A 50ms time is given for both arm movements to complete which totals
  * 100ms for the whole jump move to happen.
- * 
- * 100ms is far too little time for the servo arm to fully perform the jump
- * but it used here because it is defined so in the functional specifications.
  * 
  * Created on November 16, 2021, 2:54 PM
  */
@@ -26,20 +23,18 @@
 #include <avr/interrupt.h>
 
 
-// Copied from course material
+// Servo PWM period length
 #define SERVO_PWM_PERIOD        (0x1046)
-// Servo neutral position
-#define SERVO_PWM_DUTY_NEUTRAL  (0x0138)
 // Servo minimum position
-#define SERVO_PWM_DUTY_MIN      (0x00D0)
+#define SERVO_PWM_DUTY_0DEG     (0x00D0)
+// Servo neutral position
+#define SERVO_PWM_DUTY_45DEG    (0x0138)
+// Servo 60 degrees position
+#define SERVO_PWM_DUTY_60DEG    (0x016C)
 // Servo maximum position
-#define SERVO_PWM_DUTY_MAX      (0x01A0)
-
+#define SERVO_PWM_DUTY_90DEG    (0x01A0)
 // Time for servo to move before it can move again ~50ms
 #define RTC_MOVE_PERIOD         (1639)
-
-// A more suitable period for movement time
-// #define RTC_MOVE_PERIOD      (4095)
 
 // Numbers for the display, 0x0 to 0xA
 const uint8_t seven_segment_digits[] =
@@ -57,18 +52,18 @@ const uint8_t seven_segment_digits[] =
     0b01110111      // A
 };
 
-// Function to initialize pin configuration
+// Initialize pin configuration
 void pin_init(void);
 
-// Function for initializing real-time counter.
+// Initialize real-time counter.
 // Copied from Microchip's documentation TB3213
 // and slightly modified
 void rtc_init(void);
 
-// Function to initialize ADC
+// Initialize ADC
 void adc0_init(void);
 
-// Function to initialize TCA
+// Initialize TCA
 void tca0_init(void);
 
 // Reads and returns ADC value
@@ -80,23 +75,25 @@ void adc0_set_ldr(void);
 // Sets ADC to read from potentiometer
 void adc0_set_potentiometer(void);
 
-// Move servo to max position
-void servo_move_max(void);
+// Move servo to 60 degree position
+void servo_move_60deg(void);
 
 // Move servo to neutral position
-void servo_move_neutral(void);
+void servo_move_45deg(void);
 
-// Moves servo to max then neutral position
+// Moves servo to 60 degrees position then neutral position
 // which in this context is a jump
 void jump(void);
 
 // A jump can be performed when value 1
 // Prevents continuous jumping.
-uint8_t can_jump = 1;
+volatile uint8_t g_can_jump = 1;
 
-// 1 when servo is moving.
-// Prevents starting a move too fast.
-volatile uint8_t g_servo_moving = 0;
+// Servo is (or going to) 60 degrees position
+volatile uint8_t g_servo_60deg = 0;
+
+// Servo is (or going to) neutral (45 degrees) position
+volatile uint8_t g_servo_neutral = 0;
 
 int main(void)
 {
@@ -140,51 +137,40 @@ int main(void)
         
         // Perform a jump when LDR value exceeds treshold value
         // and jumping is allowed
-        if ((ldr_value > treshold) && (can_jump))
+        if ((ldr_value > treshold) && (g_can_jump))
         {
             jump();
         }
     }
 }
 
-// Moves servo to max then neutral position
-// which in this context is a jump.
+// Moves servo to 60 degrees then neutral position
+// which in this context is a jump
 void jump(void)
 {
-    can_jump = 0;
-    servo_move_max();
-    servo_move_neutral();
-    can_jump = 1;
+    g_can_jump = 0;
+    servo_move_60deg();
 }
 
-// Moves servo to max position.
-// Waits for RTC_MOVE_PERIOD == ~50ms
-void servo_move_max(void)
+// Moves servo to 60 degrees position
+void servo_move_60deg(void)
 {
-    g_servo_moving = 1;
-    TCA0.SINGLE.CMP2BUF = SERVO_PWM_DUTY_MAX;
+    g_servo_60deg = 1;
+    g_servo_neutral = 0;
+    TCA0.SINGLE.CMP2BUF = SERVO_PWM_DUTY_60DEG;
     RTC.PER = RTC_MOVE_PERIOD;
-    while (g_servo_moving)
-    {
-        ;
-    }
-
 }
 
-// Moves servo to neutral position.
-// Waits for RTC_MOVE_PERIOD == ~50ms
-void servo_move_neutral(void)
+// Moves servo to neutral (45 degrees) position
+void servo_move_45deg(void)
 {
-    g_servo_moving = 1;
-    TCA0.SINGLE.CMP2BUF = SERVO_PWM_DUTY_NEUTRAL;
+    g_servo_60deg = 0;
+    g_servo_neutral = 1;
+    TCA0.SINGLE.CMP2BUF = SERVO_PWM_DUTY_45DEG;
     RTC.PER = RTC_MOVE_PERIOD;
-    while (g_servo_moving)
-    {
-        ;
-    }
 }
 
-// Function to initialize TCA0.
+// Initialize TCA0.
 // Partly copied from course material.
 void tca0_init(void)
 {
@@ -200,8 +186,8 @@ void tca0_init(void)
     // Using double-buffering, set PWM period (20 ms)
     TCA0.SINGLE.PERBUF = SERVO_PWM_PERIOD;
     
-    // Set initial servo arm position as neutral (0 deg)
-    TCA0.SINGLE.CMP2BUF = SERVO_PWM_DUTY_NEUTRAL;
+    // Set initial servo arm position to neutral position
+    TCA0.SINGLE.CMP2BUF = SERVO_PWM_DUTY_45DEG;
     
     // Enable Compare Channel 2
     TCA0.SINGLE.CTRLB |= TCA_SINGLE_CMP2EN_bm;
@@ -242,7 +228,7 @@ uint16_t adc0_read(void)
         return ADC0.RES;
 }
 
-// Function to initialize pin configuration
+// Initialize pin configuration
 void pin_init(void)
 {
     // Set all pins in PORTC as outputs.
@@ -343,5 +329,12 @@ ISR(RTC_CNT_vect)
     {
         ;
     }
-    g_servo_moving = 0;
+    if (g_servo_60deg)
+    {
+        servo_move_45deg();
+    }
+    else if (g_servo_neutral)
+    {
+        g_can_jump = 1;
+    }
 }
