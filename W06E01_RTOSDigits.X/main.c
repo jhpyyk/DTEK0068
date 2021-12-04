@@ -94,54 +94,76 @@ char usart0_read_char(void)
     return USART0.RXDATAL;
 }
 
-// Send characters to USART0
-void send_character_to_queue_task(void* parameter)
+void send_number_to_queue(uint8_t number)
 {
-    char c = usart0_read_char();
     xQueueSend(
-                g_character_queue,
-                (void *) &c,
+                g_number_queue,
+                (void *) &number,
                 pdMS_TO_TICKS(10)
               );
-    
-    vTaskDelay(pdMS_TO_TICKS(10));
 }
 
 void received_character_handle(char c)
 {
-    ;
-}
-
-void receive_character_from_queue_task(void* parameter)
-{
-    char c = '\0';
     uint8_t c_ascii_value = (uint8_t)c;
-    if (g_character_queue != NULL)
+    
+    if ((c_ascii_value >= 48) && (c_ascii_value <= 57))
     {
-        xQueueReceive(
-                        g_character_queue,
-                        &(c),
-                        pdMS_TO_TICKS(10)
-                     );
-        c_ascii_value = (uint8_t)c;
-    }
-    if (c_ascii_value >= 48 && c_ascii_value <= 57)
-    {
-        char str[3] = {c, '\r','\n'};
+        char str[4] = {c_ascii_value, '\r','\n'};
         usart0_send_string(str);
-        c = '\0';
+        send_number_to_queue(c_ascii_value - 48);
     }
-    else if (c)
+    else if (c_ascii_value)
     {
         usart0_send_string("Error! Not a valid digit.\r\n");
+        send_number_to_queue(10);
     }
+}
+// Send characters to USART0
+void send_char_to_queue_task(void)
+{
+    char c;
+    while (1)
+    {
+        c = usart0_read_char();
+        if (c != '\0')
+        {
+            xQueueSend(
+                        g_character_queue,
+                        (void *) &c,
+                        pdMS_TO_TICKS(10)
+                      );
+            c = '\0';
+        }
+    }
+    vTaskDelete(NULL);
+}
+
+
+void receive_char_from_queue_task(void)
+{
+    char c;
+    while (1)
+    {
+        c = '\0';
+        if (g_character_queue != NULL)
+        {
+            xQueueReceive(
+                            g_character_queue,
+                            &(c),
+                            pdMS_TO_TICKS(10)
+                         );
+            received_character_handle(c);
+        }
+    }
+    vTaskDelete(NULL);
 }
 
 // Task to display numbers from 0x0 to 0xA with 250ms delay
 // and then repeat indefinitely
-void display_number_task(void* parameter)
+void display_number_task(void)
 {
-    uint8_t number;
+    uint8_t number = 10;
     
     while (1)
     {
@@ -154,7 +176,6 @@ void display_number_task(void* parameter)
                          );
         
             PORTC.OUT = seven_segment_digits[number];
-            vTaskDelay(pdMS_TO_TICKS(250));
         }
     }
     vTaskDelete(NULL);
@@ -186,7 +207,7 @@ int main(void)
     usart_init();
     
     g_number_queue = xQueueCreate(10, sizeof(uint8_t));
-    g_character_queue = xQueueCreate(1, sizeof(char));
+    g_character_queue = xQueueCreate(10, sizeof(char));
     
     // Create task for displaying numbers
     xTaskCreate(
@@ -197,16 +218,16 @@ int main(void)
                 tskIDLE_PRIORITY,
                 NULL
                );
-    xTaskCreate(
+    /*xTaskCreate(
                 iterate_numbers_task,
                 "iterate_numbers",
                 configMINIMAL_STACK_SIZE,
                 NULL,
                 tskIDLE_PRIORITY,
                 NULL
-               );
+               );*/
     xTaskCreate(
-                send_character_to_queue_task,
+                send_char_to_queue_task,
                 "send_character_to_queue",
                 configMINIMAL_STACK_SIZE,
                 NULL,
@@ -214,7 +235,7 @@ int main(void)
                 NULL
                );
     xTaskCreate(
-                receive_character_from_queue_task,
+                receive_char_from_queue_task,
                 "receive_character_from_queue",
                 configMINIMAL_STACK_SIZE,
                 NULL,
