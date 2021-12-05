@@ -12,8 +12,13 @@
  * distinguish it from number 3. The digit or an error message is also
  * printed in the serial terminal when a key is pressed.
  * 
- * Almost any key means that for example functionality
- * for pressing function keys (F1 - F12) is undefined.
+ * Multi-byte character's 2nd, 3rd and 4th byte could be tested and ignored
+ * with bitwise operation, since their binary code starts with 10. Multi-byte
+ * characters are checked so that only one error is printed.
+ * When F1 - F12, HOME, END and some other keys are pressed, many lines are
+ * printed. The test for multi-byte characters does not work on them because
+ * they do not follow UTF-8 rules. I tested the keys with showkey and for
+ * example HOME-keys first byte is 00011011.
  * 
  * The program uses FreeRTOS, and USART to communicate with the host serial
  * terminal.
@@ -141,7 +146,13 @@ void send_digit_to_queue(uint8_t digit)
 // sent to digit queue and an error message is sent to the serial terminal.
 void received_character_handle(uint8_t c)
 {
-    if ((c >= ASCII_DIGIT_START) &&
+    // Check if character is 2nd, 3rd or 4th byte of a multi-byte character
+    // and ignore it
+    if ((c & (1 << 7)) && !(c & (1 << 6)))
+    {
+        ;
+    }
+    else if ((c >= ASCII_DIGIT_START) &&
         (c <= ASCII_DIGIT_END))
     {
         char str[4] = {c, '\r','\n'};
