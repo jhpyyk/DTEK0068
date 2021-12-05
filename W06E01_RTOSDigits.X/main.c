@@ -1,28 +1,57 @@
 /*
  * File:   main.c
  * Author: Juuso Pyykkönen
+ * 
+ * Exercise for a university course, DTEK0068
+ * 
+ * Week 6 exercise 1, W06E01
+ * 
+ * A seven segment display shows a digit when a digit is pressed on
+ * the host keyboard (when in serial terminal). When (almost) any other key
+ * is pressed, the display shows an error character E, with a dot (E.) to
+ * distinguish it from number 3. The digit or an error message is also
+ * printed in the serial terminal when a key is pressed.
+ * 
+ * Almost any key means that for example functionality
+ * for pressing function keys (F1 - F12) is undefined.
+ * 
+ * The program uses FreeRTOS, and USART to communicate with the host serial
+ * terminal.
  *
  * Created on December 3, 2021, 4:00 PM
  */
 
-#define F_CPU 3333333
+// CPU clock frequency 3.33MHz
+#define F_CPU                       3333333
+
+// Copied from Microchip's TB3216.
+// Used for calculating baud rate for USART.
 #define USART1_BAUD_RATE(BAUD_RATE) \
 ((float)(F_CPU * 64 / (16 * (float)BAUD_RATE)) + 0.5)
 
+// Error character's index in seven_segment_digits
+#define ERROR_CHARACTER_INDEX       10
+
+// ASCII digit values.
+// 48 = '0', 57 = '9'
+#define ASCII_DIGIT_START           48
+#define ASCII_DIGIT_END             57
+
 #include <avr/io.h>
 #include <string.h>
+#include <stdio.h>
 #include "FreeRTOS.h"
 #include "clock_config.h"
 #include "task.h"
 #include "queue.h"
-#include <stdio.h>
 
-// Queue for display numbers
-QueueHandle_t g_number_queue;
+// Queue for numbers to show on display
+volatile QueueHandle_t g_digit_queue;
 
-// Queue for characters sent to USART
-QueueHandle_t g_character_queue;
+// Queue for characters to be sent via USART
+volatile QueueHandle_t g_character_queue;
 
+// Digits and an error character for the seven segment display
 const uint8_t seven_segment_digits[] =
 {
     0b00111111,     // 0
@@ -51,8 +80,8 @@ void display_init(void)
     PORTF.OUTSET = PIN5_bm;
 }
 
-// Initialize USART
-void usart_init(void)
+// Initialize USART0
+void usart0_init(void)
 {
     // Set PA0 to output (transmit)
     // and PA1 to input (receive)
@@ -63,12 +92,12 @@ void usart_init(void)
     USART0.BAUD = (uint16_t)USART1_BAUD_RATE(9600);
     
     // Enable USART0 transmitting and receiving
-    USART0.CTRLB |= USART_TXEN_bm;
-    USART0.CTRLB |= USART_RXEN_bm;
+    USART0.CTRLB = USART_TXEN_bm
+                 | USART_RXEN_bm;
 }
 
-// Send characters to USART0
-void usart0_send_char(char c)
+// Send character to the serial terminal via USART0
+void usart0_send_char(uint8_t c)
 {
     while (!(USART0.STATUS & USART_DREIF_bm))
     {
@@ -77,6 +106,7 @@ void usart0_send_char(char c)
     USART0.TXDATAL = c;
 }
 
+// Send string to the serial terminal via USART0
 void usart0_send_string(char *str)
 {
     for (uint8_t i = 0; i < strlen(str); i++)
@@ -85,7 +115,8 @@ void usart0_send_string(char *str)
     }
 }
 
-char usart0_read_char(void)
+// Receive character from serial terminal via USART0
+uint8_t usart0_receive_char(void)
 {
     while (!(USART0.STATUS & USART_RXCIF_bm))
     {
@@ -94,58 +125,61 @@ char usart0_read_char(void)
     return USART0.RXDATAL;
 }
 
-void send_number_to_queue(uint8_t number)
+// Send digit to digit queue to be displayed in the
+// seven segment display
+void send_digit_to_queue(uint8_t digit)
 {
     xQueueSend(
-                g_number_queue,
-                (void *) &number,
+                g_digit_queue,
+                (void *) &digit,
                 pdMS_TO_TICKS(10)
               );
 }
 
-void received_character_handle(char c)
+// Sends received character to digit queue and to the serial terminal
+// if it is a digit. If it's any other character, the error character is
+// sent to digit queue and an error message is sent to the serial terminal.
+void received_character_handle(uint8_t c)
 {
-    uint8_t c_ascii_value = (uint8_t)c;
-    
-    if ((c_ascii_value >= 48) && (c_ascii_value <= 57))
+    if ((c >= ASCII_DIGIT_START) &&
+        (c <= ASCII_DIGIT_END))
     {
-        char str[4] = {c_ascii_value, '\r','\n'};
+        char str[4] = {c, '\r','\n'};
         usart0_send_string(str);
-        send_number_to_queue(c_ascii_value - 48);
+        send_digit_to_queue(c - ASCII_DIGIT_START);
     }
-    else if (c_ascii_value)
+    else if (c)
     {
         usart0_send_string("Error! Not a valid digit.\r\n");
-        send_number_to_queue(10);
+        send_digit_to_queue(ERROR_CHARACTER_INDEX);
     }
 }
-// Send characters to USART0
-void send_char_to_queue_task(void)
+// Receive a character from the serial terminal and send it to queue
+void send_char_to_queue_task()
 {
-    char c;
+    uint8_t c = 0;
     while (1)
     {
-        c = usart0_read_char();
-        if (c != '\0')
+        c = usart0_receive_char();
+        if (c)
         {
             xQueueSend(
                         g_character_queue,
                         (void *) &c,
                         pdMS_TO_TICKS(10)
                       );
-            c = '\0';
+            c = 0;
         }
     }
     vTaskDelete(NULL);
 }
 
-
-void receive_char_from_queue_task(void)
+// Receive a character from queue and pass it to the handle function
+void receive_char_from_queue_task()
 {
-    char c;
+    uint8_t c = 0;
     while (1)
     {
-        c = '\0';
         if (g_character_queue != NULL)
         {
             xQueueReceive(
@@ -154,89 +188,69 @@ void receive_char_from_queue_task(void)
                             pdMS_TO_TICKS(10)
                          );
             received_character_handle(c);
+            c = 0;
         }
     }
     vTaskDelete(NULL);
 }
 
-// Task to display numbers from 0x0 to 0xA with 250ms delay
-// and then repeat indefinitely
-void display_number_task(void)
+// Receive a digit from digit queue and display
+// it in the seven segment display
+void display_digit_task()
 {
-    uint8_t number = 10;
+    uint8_t digit = ERROR_CHARACTER_INDEX;
     
     while (1)
     {
-        if (g_number_queue != NULL)
+        if (g_digit_queue != NULL)
         {
             xQueueReceive(
-                            g_number_queue,
-                            &(number),
+                            g_digit_queue,
+                            &(digit),
                             pdMS_TO_TICKS(10)
                          );
         
-            PORTC.OUT = seven_segment_digits[number];
+            PORTC.OUT = seven_segment_digits[digit];
         }
     }
     vTaskDelete(NULL);
 }
 
-void iterate_numbers_task(void* parameter)
-{
-    uint8_t i = 0;
-    while (1)
-    {
-        xQueueSend(
-                    g_number_queue,
-                    (void *) &i,
-                    pdMS_TO_TICKS(10)
-                  );
-        i++;
-        if (i == 10)
-        {
-            i = 0;
-        }
-        vTaskDelay(pdMS_TO_TICKS(250));
-    }
-    vTaskDelete(NULL);
-}
-
+// Calls initialization functions, creates the queues and the tasks then
+// starts the scheduler
 int main(void)
 {
     display_init();
-    usart_init();
+    usart0_init();
     
-    g_number_queue = xQueueCreate(10, sizeof(uint8_t));
-    g_character_queue = xQueueCreate(10, sizeof(char));
+    // Queue length 8 is arbitrary
+    g_digit_queue = xQueueCreate(8, sizeof(uint8_t));
+    g_character_queue = xQueueCreate(8, sizeof(uint8_t));
     
-    // Create task for displaying numbers
+    // Create a task for displaying numbers
     xTaskCreate(
-                display_number_task,
-                "display_number",
+                display_digit_task,
+                "display_digit",
                 configMINIMAL_STACK_SIZE,
                 NULL,
                 tskIDLE_PRIORITY,
                 NULL
                );
-    /*xTaskCreate(
-                iterate_numbers_task,
-                "iterate_numbers",
-                configMINIMAL_STACK_SIZE,
-                NULL,
-                tskIDLE_PRIORITY,
-                NULL
-               );*/
+    
+    // Create a task to send characters to the character queue
     xTaskCreate(
                 send_char_to_queue_task,
-                "send_character_to_queue",
+                "send_char_to_queue",
                 configMINIMAL_STACK_SIZE,
                 NULL,
                 tskIDLE_PRIORITY,
                 NULL
                );
+    
+    // Create a task to receive characters from the character queue
     xTaskCreate(
                 receive_char_from_queue_task,
-                "receive_character_from_queue",
+                "receive_char_from_queue",
                 configMINIMAL_STACK_SIZE,
                 NULL,
                 tskIDLE_PRIORITY,
