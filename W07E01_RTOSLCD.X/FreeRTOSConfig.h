@@ -54,7 +54,7 @@
 /* NOTE: You can choose the following clock frequencies (Hz):
 20000000, 10000000, 5000000, 2000000. 
 For other frequency values, update clock_config.h with your own settings. */
-#define configCPU_CLOCK_HZ 10000000
+#define configCPU_CLOCK_HZ 3333333
 
 #define configTICK_RATE_HZ 1000
 #define configMAX_PRIORITIES 4

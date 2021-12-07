@@ -12,7 +12,14 @@
 extern "C" {
 #endif
 
+// Initialize ADC0
+void adc0_init(void);
 
+// Reads and returns ADC0 value
+uint16_t adc0_read(void);
+
+// Read light-level from LDR (PE0)
+uint16_t ldr_read();
 
 
 #ifdef	__cplusplus
