@@ -21,6 +21,12 @@ uint16_t adc0_read(void);
 // Read light-level from LDR (PE0)
 uint16_t ldr_read();
 
+// Read potentiometer value (PF4)
+uint16_t potentiometer_read();
+
+// Read thermistor value (PE1)
+uint16_t thermistor_read();
+
 
 #ifdef	__cplusplus
 }
