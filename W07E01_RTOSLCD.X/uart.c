@@ -5,6 +5,9 @@
 #include "clock_config.h"
 #include "task.h"
 #include "string.h"
+#include "stdio.h"
+
+#include "adc.h"
 
 // Initialize USART0
 void usart0_init(void)
@@ -44,7 +47,10 @@ void usart0_send_string_task()
     vTaskDelay(pdMS_TO_TICKS(200));
     while (1)
     {
-        usart0_send_string("ADC value: 1023\r\n");
+        uint16_t ldr = ldr_read();
+        char str[32];
+        sprintf(str, "LDR value: %d\r\n", ldr);
+        usart0_send_string(str);
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
     vTaskDelete(NULL);

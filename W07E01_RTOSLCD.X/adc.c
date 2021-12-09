@@ -7,6 +7,10 @@
 // Mutex for controlled ADC reading between
 // three components
 SemaphoreHandle_t adc0_mutex;
+uint16_t ldr_value = 0;
+uint16_t pot_value = 0;
+uint16_t thermistor_value = 0;
+
 
 // Initialize ADC0
 void adc0_init(void)
@@ -49,7 +53,7 @@ void adc0_init(void)
     
     // Mutex for controlled ADC reading between
     // three components
-    adc0_mutex = xSemaphoreCreateMutex(void);
+    adc0_mutex = xSemaphoreCreateMutex();
 }
 
 // Reads and returns ADC0 value
@@ -70,7 +74,7 @@ uint16_t adc0_read(void)
 // Read light-level from LDR (PE0)
 uint16_t ldr_read()
 {
-    uint16_t ldr_value;
+    // uint16_t ldr_value = 0;
     
     // Prevent other ADC-reading functions from intervening
     if (xSemaphoreTake(adc0_mutex, 0) == pdTRUE)
@@ -94,7 +98,7 @@ uint16_t ldr_read()
 // Read potentiometer value (PF4)
 uint16_t potentiometer_read()
 {
-    uint16_t pot_value;
+    // uint16_t pot_value = 0;
     
     // Prevent other ADC-reading functions from intervening
     if (xSemaphoreTake(adc0_mutex, 0) == pdTRUE)
@@ -118,7 +122,7 @@ uint16_t potentiometer_read()
 // Read thermistor value (PE1)
 uint16_t thermistor_read()
 {
-    uint16_t thermistor_value;
+    // uint16_t thermistor_value = 0;
     
     // Prevent other ADC-reading functions from intervening
     if (xSemaphoreTake(adc0_mutex, 0) == pdTRUE)
