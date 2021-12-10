@@ -1,15 +1,16 @@
 #include "backlight.h"
-#include <avr/io.h>
 #include "adc.h"
-#include "FreeRTOS.h"
-#include "FreeRTOSConfig.h"
-#include "task.h"
-
-
 #include "uart.h"
+#include "task.h"
+#include "semphr.h"
 
 // All three inititialization functions are copied from
 // Microchip's TB3214 and modified
+
+SemaphoreHandle_t backlight_mutex;
+TimerHandle_t backlight_timer;
+uint8_t backlight_is_on = 0;
+uint16_t last_pot_value;
 
 void port_init(void)
 {
@@ -30,8 +31,8 @@ void tca0_init(void)
 void tcb3_init(void)
 {
     
-    /* Load CCMP register with the period and duty cycle of the PWM */
-    TCB3.CCMP = TCB_CMP_VALUE;
+    // Zero duty cycle
+    TCB3.CCMP = TCB_ZERO_DUTY;
 
     // Enable TCB3 and use clock from TCA
     TCB3.CTRLA |= TCB_ENABLE_bm;
@@ -47,21 +48,54 @@ void backlight_init(void)
     port_init();
     tca0_init();
     tcb3_init();
+    backlight_timer = xTimerCreate("backlight_timer",
+                                   pdMS_TO_TICKS(10000),
+                                   pdFALSE,
+                                   (void *) 0,
+                                   backlight_turn_off);
+    backlight_mutex = xSemaphoreCreateMutex();
 }
 
-void backlight_adjust(void)
+void backlight_adjust(uint16_t value)
 {
-    TCB3.CCMP = 0x00FF | (ldr_read() << 8);
+    TCB3.CCMP = 0x00FF | (value << 6);
 }
 
 void backlight_adjust_task()
 {
     vTaskDelay(pdMS_TO_TICKS(200));
+    uint16_t new_pot_value = 0;
+    xTimerStart(backlight_timer, 0);
     
     while (1)
     {
-        backlight_adjust();
+        if (backlight_is_on)
+        {
+            backlight_adjust(ldr_read());
+        }
+        else
+        {
+            new_pot_value = potentiometer_read();
+            
+            if ((new_pot_value < (last_pot_value - 50)) ||
+                (new_pot_value > (last_pot_value + 50)))
+            {
+                backlight_is_on = 1;
+                last_pot_value = new_pot_value;
+                xTimerReset(backlight_timer, 1);
+            }
+            else
+            {
+                backlight_adjust(0);
+            }
+        }
     }
     
     vTaskDelete(NULL);
+}
+
+void backlight_turn_off(TimerHandle_t backlight_timer)
+{
+    backlight_is_on = 0;
+    xTimerStop(backlight_timer, 1);
 }

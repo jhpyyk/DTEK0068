@@ -74,10 +74,8 @@ uint16_t adc0_read(void)
 // Read light-level from LDR (PE0)
 uint16_t ldr_read()
 {
-    // uint16_t ldr_value = 0;
-    
     // Prevent other ADC-reading functions from intervening
-    if (xSemaphoreTake(adc0_mutex, 0) == pdTRUE)
+    if (xSemaphoreTake(adc0_mutex, 1) == pdTRUE)
     {
         // Set reference to internal voltage (2.5V)
         ADC0.CTRLC = (ADC0.CTRLC & ~ADC_REFSEL_gm) | ADC_REFSEL_INTREF_gc;
@@ -98,16 +96,14 @@ uint16_t ldr_read()
 // Read potentiometer value (PF4)
 uint16_t potentiometer_read()
 {
-    // uint16_t pot_value = 0;
-    
     // Prevent other ADC-reading functions from intervening
-    if (xSemaphoreTake(adc0_mutex, 0) == pdTRUE)
+    if (xSemaphoreTake(adc0_mutex, 1) == pdTRUE)
     {
         // Set reference voltage to Vdd
         ADC0.CTRLC = (ADC0.CTRLC & ~ADC_REFSEL_gm) | ADC_REFSEL_VDDREF_gc;
 
         // Set ADC0 to read from potentiometer (PF4)
-        ADC0.MUXPOS = ADC_MUXPOS_AIN8_gc;
+        ADC0.MUXPOS = ADC_MUXPOS_AIN14_gc;
 
         // Discard first reading
         adc0_read();
@@ -122,10 +118,8 @@ uint16_t potentiometer_read()
 // Read thermistor value (PE1)
 uint16_t thermistor_read()
 {
-    // uint16_t thermistor_value = 0;
-    
     // Prevent other ADC-reading functions from intervening
-    if (xSemaphoreTake(adc0_mutex, 0) == pdTRUE)
+    if (xSemaphoreTake(adc0_mutex, 1) == pdTRUE)
     {
         // Set reference voltage to Vdd
         ADC0.CTRLC = (ADC0.CTRLC & ~ADC_REFSEL_gm) | ADC_REFSEL_VDDREF_gc;
