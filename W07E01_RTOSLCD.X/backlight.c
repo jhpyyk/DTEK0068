@@ -3,11 +3,11 @@
 #include "uart.h"
 #include "task.h"
 #include "semphr.h"
+#include "lcd.h"
 
 // All three inititialization functions are copied from
 // Microchip's TB3214 and modified
 
-SemaphoreHandle_t backlight_mutex;
 TimerHandle_t backlight_timer;
 uint8_t backlight_is_on = 0;
 uint16_t last_pot_value;
@@ -53,7 +53,7 @@ void backlight_init(void)
                                    pdFALSE,
                                    (void *) 0,
                                    backlight_turn_off);
-    backlight_mutex = xSemaphoreCreateMutex();
+    backlight_adjust(ldr_read());
 }
 
 void backlight_adjust(uint16_t value)
@@ -63,9 +63,10 @@ void backlight_adjust(uint16_t value)
 
 void backlight_adjust_task()
 {
-    vTaskDelay(pdMS_TO_TICKS(200));
     uint16_t new_pot_value = 0;
     xTimerStart(backlight_timer, 0);
+    
+    vTaskDelay(pdMS_TO_TICKS(200));
     
     while (1)
     {

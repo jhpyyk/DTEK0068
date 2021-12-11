@@ -12,7 +12,17 @@
 extern "C" {
 #endif
 
+#define LOWER_LINE_TEXT "DTEK0068 Embedded Microprocessor Systems"
+    
+struct lcd_message
+{
+    uint16_t xpos;
+    uint16_t ypos;
+    char text[16];
+};
 
+void display_init(void);
+void lcd_send_message_task();
 
 
 #ifdef	__cplusplus
