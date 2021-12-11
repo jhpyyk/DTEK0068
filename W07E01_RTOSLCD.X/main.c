@@ -15,31 +15,17 @@
 #include "adc.h"
 #include "backlight.h"
 #include "lcd.h"
-#include "util/delay.h"
 #include "display.h"
+#include "scroller.h"
 
-TaskHandle_t init_handle;
-
-void init_task()
-{
-    usart0_init();
-    adc0_init();
-    backlight_init();
-    lcd_init();
-    display_init();
-    vTaskDelay(pdMS_TO_TICKS(200));
-}
 
 int main(void)
 {
-    xTaskCreate(
-                init_task,
-                "init_task",
-                configMINIMAL_STACK_SIZE,
-                NULL,
-                tskIDLE_PRIORITY,
-                NULL
-               );
+    
+    usart0_init();
+    adc0_init();
+    backlight_init();
+    scroll_init();
     
     
     // Create a task to send string to the serial terminal via USART0
@@ -65,6 +51,14 @@ int main(void)
     xTaskCreate(
                 lcd_send_message_task,
                 "lcd_send_message_task",
+                configMINIMAL_STACK_SIZE,
+                NULL,
+                tskIDLE_PRIORITY,
+                NULL
+               );
+    xTaskCreate(
+                scroll_task,
+                "scroll_task",
                 configMINIMAL_STACK_SIZE,
                 NULL,
                 tskIDLE_PRIORITY,

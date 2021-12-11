@@ -12,7 +12,14 @@
 extern "C" {
 #endif
 
-#define LOWER_LINE_TEXT "DTEK0068 Embedded Microprocessor Systems"
+#//define LOWER_LINE_TEXT "DTEK0068 Embedded Microprocessor Systems"
+
+#include <avr/io.h>
+// FreeRTOS
+#include "FreeRTOSConfig.h"
+#include "FreeRTOS.h"
+#include "queue.h"
+    
     
 struct lcd_message
 {
@@ -20,6 +27,8 @@ struct lcd_message
     uint16_t ypos;
     char text[16];
 };
+
+QueueHandle_t message_queue;
 
 void display_init(void);
 void lcd_send_message_task();

@@ -65,6 +65,7 @@ void backlight_adjust_task()
 {
     uint16_t new_pot_value = 0;
     xTimerStart(backlight_timer, 0);
+    backlight_init();
     
     vTaskDelay(pdMS_TO_TICKS(200));
     
@@ -74,21 +75,15 @@ void backlight_adjust_task()
         {
             backlight_adjust(ldr_read());
         }
-        else
+
+        new_pot_value = potentiometer_read();
+
+        if ((new_pot_value < (last_pot_value - 50)) ||
+            (new_pot_value > (last_pot_value + 50)))
         {
-            new_pot_value = potentiometer_read();
-            
-            if ((new_pot_value < (last_pot_value - 50)) ||
-                (new_pot_value > (last_pot_value + 50)))
-            {
-                backlight_is_on = 1;
-                last_pot_value = new_pot_value;
-                xTimerReset(backlight_timer, 1);
-            }
-            else
-            {
-                backlight_adjust(0);
-            }
+            backlight_is_on = 1;
+            last_pot_value = new_pot_value;
+            xTimerReset(backlight_timer, 1);
         }
     }
     
@@ -98,5 +93,6 @@ void backlight_adjust_task()
 void backlight_turn_off(TimerHandle_t backlight_timer)
 {
     backlight_is_on = 0;
+    backlight_adjust(0);
     xTimerStop(backlight_timer, 1);
 }

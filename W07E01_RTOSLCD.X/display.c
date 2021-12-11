@@ -2,33 +2,20 @@
 // FreeRTOS
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
+#include "queue.h"
 #include "task.h"
 
 #include "lcd.h"
-#include "queue.h"
 
 #include "display.h"
 #include "stdio.h"
 
-QueueHandle_t message_queue;
-
-struct lcd_message message;
-
-void display_init(void)
-{
-    message.xpos = 0;
-    message.ypos = 1;
-    sprintf(message.text, "ssss");
-    char str[6] = "sssd";
-    message_queue = xQueueCreate(10, sizeof(str));
-    xQueueSend(message_queue,
-               (void *)str,
-               1);
-}
+#include "scroller.h"
 
 void lcd_send_message_task()
 {
-    char str[6];
+    lcd_init();
+    struct lcd_message message;
     
     vTaskDelay(pdMS_TO_TICKS(200));
     
@@ -36,10 +23,11 @@ void lcd_send_message_task()
     {
         if(message_queue != NULL)
         {
-            if (xQueueReceive(message_queue, &(str), 0) == pdPASS)
+            if (xQueueReceive(message_queue, &message, 1) == pdPASS)
             {
-                lcd_write(str);
-                str[0] = '\0';
+                lcd_clear();
+                lcd_cursor_set(message.xpos, message.ypos);
+                lcd_write(message.text);
             }
         }
     }

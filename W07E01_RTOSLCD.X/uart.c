@@ -44,6 +44,7 @@ void usart0_send_string(char *str)
 // in one second intervals 
 void usart0_send_string_task()
 {
+    usart0_init();
     vTaskDelay(pdMS_TO_TICKS(200));
     while (1)
     {
