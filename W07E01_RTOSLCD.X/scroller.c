@@ -9,7 +9,6 @@
 #include "task.h"
 #include "queue.h"
 #include "stdio.h"
-#include "display.h"
 #include "string.h"
 
 struct lcd_message message;
@@ -22,9 +21,9 @@ void scroll_init(void)
     message.xpos = 1;
     message.ypos = 0;
     strncpy(message.text, ptr, LCD_DISPLAY_WIDTH);
-    message_queue = xQueueCreate(1, sizeof(message));
+    scroller_queue = xQueueCreate(1, sizeof(message));
     xQueueSend(
-                message_queue,
+                scroller_queue,
                 &message,
                 1
                );
@@ -45,7 +44,7 @@ void scroll_right(void)
 void scroll_task()
 {
     scroll_init();
-    message_queue = xQueueCreate(1, sizeof(message));
+    scroller_queue = xQueueCreate(1, sizeof(message));
     vTaskDelay(pdMS_TO_TICKS(200));
     
     while (1)
@@ -54,7 +53,7 @@ void scroll_task()
         {
             scroll_left();
             xQueueSend(
-                        message_queue,
+                        scroller_queue,
                         &message,
                         1
                       );
@@ -64,7 +63,7 @@ void scroll_task()
         {
             scroll_right();
             xQueueSend(
-                        message_queue,
+                        scroller_queue,
                         &message,
                         1
                       );

@@ -12,7 +12,8 @@
 extern "C" {
 #endif
 
-#//define LOWER_LINE_TEXT "DTEK0068 Embedded Microprocessor Systems"
+#define LOWER_LINE_TEXT         "DTEK0068 Embedded Microprocessor Systems"
+#define LCD_DISPLAY_WIDTH       16 
 
 #include <avr/io.h>
 // FreeRTOS
@@ -28,7 +29,8 @@ struct lcd_message
     char text[16];
 };
 
-QueueHandle_t message_queue;
+QueueHandle_t scroller_queue;
+QueueHandle_t adc0_value_queue;
 
 void display_init(void);
 void lcd_send_message_task();

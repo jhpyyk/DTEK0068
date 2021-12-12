@@ -11,24 +11,27 @@
 #include "stdio.h"
 
 #include "scroller.h"
+#include "adc0values.h"
 
 void lcd_send_message_task()
 {
     lcd_init();
-    struct lcd_message message;
+    struct lcd_message scroller_message;
+    struct lcd_message adc0_value_message;
     
     vTaskDelay(pdMS_TO_TICKS(200));
     
     while (1)
     {
-        if(message_queue != NULL)
-        {
-            if (xQueueReceive(message_queue, &message, 1) == pdPASS)
-            {
-                lcd_clear();
-                lcd_cursor_set(message.xpos, message.ypos);
-                lcd_write(message.text);
+            if (xQueueReceive(scroller_queue, &scroller_message, 1) == pdPASS)
+            {   
+                lcd_cursor_set(scroller_message.xpos, scroller_message.ypos);
+                lcd_write(scroller_message.text);
             }
-        }
+            if (xQueueReceive(adc0_value_queue, &adc0_value_message, 1) == pdPASS)
+            {               
+                lcd_cursor_set(adc0_value_message.xpos, adc0_value_message.ypos);
+                lcd_write(adc0_value_message.text);
+            }
     }
 }

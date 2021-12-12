@@ -17,6 +17,7 @@
 #include "lcd.h"
 #include "display.h"
 #include "scroller.h"
+#include "adc0values.h"
 
 
 int main(void)
@@ -59,6 +60,14 @@ int main(void)
     xTaskCreate(
                 scroll_task,
                 "scroll_task",
+                configMINIMAL_STACK_SIZE,
+                NULL,
+                tskIDLE_PRIORITY,
+                NULL
+               );
+    xTaskCreate(
+                adc0_value_task,
+                "adc0_value_task",
                 configMINIMAL_STACK_SIZE,
                 NULL,
                 tskIDLE_PRIORITY,
