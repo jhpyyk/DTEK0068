@@ -39,19 +39,19 @@ void adc0_value_task()
         if (i == 0)
         {
             value = ldr_read();
-            sprintf(str, "LDR value: %d\r\n", value);
+            sprintf(str, "LDR value: %d", value);
             i++;
         }
         else if (i == 1)
         {
             value = thermistor_read();
-            sprintf(str, "NTC value: %d\r\n", value);
+            sprintf(str, "NTC value: %d", value);
             i++;
         }
         else
         {
             value = potentiometer_read();
-            sprintf(str, "POT value: %d\r\n", value);
+            sprintf(str, "POT value: %d", value);
             i = 0;
         }
         strcpy(adc0_value_message.text, str);

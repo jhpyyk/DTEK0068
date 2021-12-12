@@ -64,10 +64,10 @@ void backlight_adjust(uint16_t value)
 void backlight_adjust_task()
 {
     uint16_t new_pot_value = 0;
-    xTimerStart(backlight_timer, 0);
     backlight_init();
     
     vTaskDelay(pdMS_TO_TICKS(200));
+    xTimerStart(backlight_timer, 0);
     
     while (1)
     {
