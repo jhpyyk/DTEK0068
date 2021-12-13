@@ -85,6 +85,7 @@ void backlight_adjust_task()
             last_pot_value = new_pot_value;
             xTimerReset(backlight_timer, 1);
         }
+        vTaskDelay(0);
     }
     
     vTaskDelete(NULL);
