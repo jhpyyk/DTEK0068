@@ -26,13 +26,12 @@ struct lcd_message
 {
     uint16_t xpos;
     uint16_t ypos;
-    char text[16];
+    char text[17];
 };
 
 QueueHandle_t scroller_queue;
 QueueHandle_t adc0_value_queue;
 
-void display_init(void);
 void lcd_send_message_task();
 
 

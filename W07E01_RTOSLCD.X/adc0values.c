@@ -19,14 +19,7 @@ void adc0_value_init(void)
 {
     adc0_value_message.xpos = 0;
     adc0_value_message.ypos = 0;
-    sprintf(str, "LDR value: %d", value);
-    strcpy(adc0_value_message.text, str);
     adc0_value_queue = xQueueCreate(1, sizeof(adc0_value_message));
-    xQueueSend(
-                adc0_value_queue,
-                &adc0_value_message,
-                1
-               );
 }
 
 void adc0_value_task()
@@ -39,19 +32,19 @@ void adc0_value_task()
         if (i == 0)
         {
             value = ldr_read();
-            sprintf(str, "LDR value: %d", value);
+            sprintf(str, "LDR value: %d   ", value);
             i++;
         }
         else if (i == 1)
         {
             value = thermistor_read();
-            sprintf(str, "NTC value: %d", value);
+            sprintf(str, "NTC value: %d   ", value);
             i++;
         }
         else
         {
             value = potentiometer_read();
-            sprintf(str, "POT value: %d", value);
+            sprintf(str, "POT value: %d   ", value);
             i = 0;
         }
         strcpy(adc0_value_message.text, str);

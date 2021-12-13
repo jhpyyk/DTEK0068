@@ -22,11 +22,6 @@ void scroll_init(void)
     message.ypos = 0;
     strncpy(message.text, ptr, LCD_DISPLAY_WIDTH);
     scroller_queue = xQueueCreate(1, sizeof(message));
-    xQueueSend(
-                scroller_queue,
-                &message,
-                1
-               );
 }
 
 void scroll_left(void)

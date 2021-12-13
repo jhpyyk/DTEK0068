@@ -48,15 +48,6 @@ int main(void)
                 tskIDLE_PRIORITY,
                 NULL
                );
-    
-    xTaskCreate(
-                lcd_send_message_task,
-                "lcd_send_message_task",
-                configMINIMAL_STACK_SIZE,
-                NULL,
-                tskIDLE_PRIORITY,
-                NULL
-               );
     xTaskCreate(
                 scroll_task,
                 "scroll_task",
@@ -68,6 +59,14 @@ int main(void)
     xTaskCreate(
                 adc0_value_task,
                 "adc0_value_task",
+                configMINIMAL_STACK_SIZE,
+                NULL,
+                tskIDLE_PRIORITY,
+                NULL
+               );
+    xTaskCreate(
+                lcd_send_message_task,
+                "lcd_send_message_task",
                 configMINIMAL_STACK_SIZE,
                 NULL,
                 tskIDLE_PRIORITY,
