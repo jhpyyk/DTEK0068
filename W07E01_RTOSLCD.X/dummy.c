@@ -2,7 +2,7 @@
  * File:   dummy.c
  * Author: Juuso Pyykkönen
  * 
- * Sets on-board LED on if thermistor value is greater
+ * Task that sets on-board LED on if thermistor value is greater
  * than potentiometer. Otherwise turns the LED off.
  * Checks the condition every 100ms.
  *

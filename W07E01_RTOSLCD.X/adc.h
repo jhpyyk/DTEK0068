@@ -1,6 +1,6 @@
 /* 
  * File:   adc.h
- * Author: juuso
+ * Author: Juuso Pyykkönen
  *
  * Created on December 7, 2021, 4:03 PM
  */
@@ -19,13 +19,13 @@ void adc0_init(void);
 uint16_t adc0_read(void);
 
 // Read light-level from LDR (PE0)
-uint16_t ldr_read();
+uint16_t ldr_read(void);
 
 // Read potentiometer value (PF4)
-uint16_t potentiometer_read();
+uint16_t potentiometer_read(void);
 
 // Read thermistor value (PE1)
-uint16_t thermistor_read();
+uint16_t thermistor_read(void);
 
 
 #ifdef	__cplusplus

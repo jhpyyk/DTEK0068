@@ -13,6 +13,12 @@ extern "C" {
 #endif
 
 void adc0_value_init(void);
+
+// First reads LDR value and sends it as a message to LCD.
+// Then thermistor value.
+// Then potentiometer.
+// Starts over.
+// Messages are sent in ~660ms intervals.
 void adc0_value_task();
 
 

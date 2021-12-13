@@ -1,3 +1,23 @@
+/* 
+ * File:   backlight.c
+ * Author: Juuso Pyykkönen
+ *
+ * Sets LCD backlight brightness relative to the LDR.
+ * Backlight turns off after 10 seconds without interaction
+ * with the potentiometer.
+ * 
+ * Potentiometer change has a -+50 tolerance.
+ * 
+ * TCA is used for copying it to TCB, because TCB
+ * does not have great enough prescaler.
+ * 
+ * Created on December 7, 2021, 4:03 PM
+ */
+
+#include <avr/io.h>
+#include "FreeRTOS.h"
+#include "FreeRTOSConfig.h"
+#include "timers.h"
 #include "backlight.h"
 #include "adc.h"
 #include "uart.h"
@@ -5,7 +25,7 @@
 #include "semphr.h"
 #include "lcd.h"
 
-// All three inititialization functions are copied from
+// Port, TCA and TCB inititialization functions are copied from
 // Microchip's TB3214 and modified
 
 TimerHandle_t backlight_timer;
@@ -48,6 +68,8 @@ void backlight_init(void)
     port_init();
     tca0_init();
     tcb3_init();
+    
+    // Timer to turn backlight off
     backlight_timer = xTimerCreate("backlight_timer",
                                    pdMS_TO_TICKS(10000),
                                    pdFALSE,
@@ -56,6 +78,9 @@ void backlight_init(void)
     backlight_adjust(ldr_read());
 }
 
+// value is a 10-bit value from ADC.
+// Shifting it six bits preserves 8 most significant bits.
+// CCMP register controls PWM for screen brightness.
 void backlight_adjust(uint16_t value)
 {
     TCB3.CCMP = 0x00FF | (value << 6);
@@ -91,6 +116,7 @@ void backlight_adjust_task()
     vTaskDelete(NULL);
 }
 
+// Sets backlight PWM to zero duty
 void backlight_turn_off(TimerHandle_t backlight_timer)
 {
     backlight_is_on = 0;

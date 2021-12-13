@@ -1,3 +1,14 @@
+/* 
+ * File:   adc.c
+ * Author: Juuso Pyykkönen
+ * 
+ * Reads analog values from potentiometer, thermistor
+ * and LDR. Converts them to digital to be used by tasks.
+ *
+ * Created on December 7, 2021, 4:04 PM
+ */
+
+
 #include <avr/io.h>
 #include "adc.h"
 #include "FreeRTOS.h"
@@ -72,7 +83,7 @@ uint16_t adc0_read(void)
 }
 
 // Read light-level from LDR (PE0)
-uint16_t ldr_read()
+uint16_t ldr_read(void)
 {
     // Prevent other ADC-reading functions from intervening
     if (xSemaphoreTake(adc0_mutex, 1) == pdTRUE)
@@ -94,7 +105,7 @@ uint16_t ldr_read()
 }
 
 // Read potentiometer value (PF4)
-uint16_t potentiometer_read()
+uint16_t potentiometer_read(void)
 {
     // Prevent other ADC-reading functions from intervening
     if (xSemaphoreTake(adc0_mutex, 1) == pdTRUE)
@@ -116,7 +127,7 @@ uint16_t potentiometer_read()
 }
 
 // Read thermistor value (PE1)
-uint16_t thermistor_read()
+uint16_t thermistor_read(void)
 {
     // Prevent other ADC-reading functions from intervening
     if (xSemaphoreTake(adc0_mutex, 1) == pdTRUE)

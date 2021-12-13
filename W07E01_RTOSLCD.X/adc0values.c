@@ -1,24 +1,47 @@
+/* 
+ * File:   adc0values.c
+ * Author: Juuso Pyykkönen
+ * 
+ * First reads LDR value and sends it as a message to LCD.
+ * Then thermistor value.
+ * Then potentiometer.
+ * Then starts over.
+ * Messages are sent in ~660ms intervals.
+ *
+ * Created on December 12, 2021, 2:35 PM
+ */
+
+
 #include <avr/io.h>
-// FreeRTOS
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+
+#include "adc0values.h"
 #include "display.h"
 #include "adc.h"
 #include "string.h"
 #include "stdio.h"
-#include "adc0values.h"
 
+// Struct from display.h.
+// Used for sending messages to LCD.
 struct lcd_message adc0_value_message;
+
+// LDR value
 uint16_t value = 0;
+
+// Message text
 char str[17];
 
 
 void adc0_value_init(void)
 {
+    // Message position on LCD
     adc0_value_message.xpos = 0;
     adc0_value_message.ypos = 0;
+    
+    // Message queue for ADC values
     adc0_value_queue = xQueueCreate(1, sizeof(adc0_value_message));
 }
 
