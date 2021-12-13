@@ -1,13 +1,21 @@
 /*
  * File:   main.c
- * Author: juuso
+ * Author: Juuso Pyykkönen
  * Email: juuso.pyyk@gmail.com
  * 
  * Exercise for a university course, DTEK0068
  * 
  * Week 7 exercise 1, W07E01
  * 
- * 
+ * Tasks in this program do following things:
+ * - Send messages to serial terminal in one second intervals
+ * - Adjust LCD backlight relative to LDR value
+ * - Turn backlight off after 10 seconds without potentiometer change
+ * - Turn on-board LED on when NTC thermistor is greater than
+ *   potentiometer value and off otherwise
+ * - Display LDR, thermistor and potentiometer values in LCD
+ *   one after the other
+ * - Display a back and forth scrolling text in LCD
  * 
  * 
  * Created on December 7, 2021, 4:02 PM
