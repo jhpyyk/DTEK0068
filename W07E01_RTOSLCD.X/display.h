@@ -1,6 +1,6 @@
 /* 
  * File:   display.h
- * Author: juuso
+ * Author: Juuso Pyykkönen
  *
  * Created on December 7, 2021, 4:04 PM
  */
@@ -21,7 +21,7 @@ extern "C" {
 #include "FreeRTOS.h"
 #include "queue.h"
     
-    
+// Message struct for LCD
 struct lcd_message
 {
     uint16_t xpos;

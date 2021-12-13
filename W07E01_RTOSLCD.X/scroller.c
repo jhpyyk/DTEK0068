@@ -1,3 +1,13 @@
+/* 
+ * File:   scroller.c
+ * Author: Juuso Pyykkönen
+ *
+ * Scrolls the text defined in LOWER_LINE_TEXT back and forth
+ * in LCD. ~5 characters per second.
+ * 
+ * Created on December 7, 2021, 4:04 PM
+ */
+
 #include "scroller.h"
 #include "display.h"
 #include "lcd.h"
@@ -11,6 +21,7 @@
 #include "stdio.h"
 #include "string.h"
 
+// Message struct from display.h
 struct lcd_message message;
 char scrolling_text[41];
 void* ptr = scrolling_text;

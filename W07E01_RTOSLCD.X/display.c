@@ -1,3 +1,12 @@
+/* 
+ * File:   display.c
+ * Author: Juuso Pyykkönen
+ *
+ * Sends messages to LCD
+ * 
+ * Created on December 7, 2021, 4:04 PM
+ */
+
 #include <avr/io.h>
 // FreeRTOS
 #include "FreeRTOSConfig.h"

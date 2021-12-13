@@ -19,7 +19,6 @@ extern "C" {
 #include "FreeRTOSConfig.h"
 #include "timers.h"
 
-// Initialization functions
 void port_init (void);
 void tca0_init (void);
 void tcb3_init (void);

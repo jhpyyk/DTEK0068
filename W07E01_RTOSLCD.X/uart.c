@@ -1,3 +1,12 @@
+/* 
+ * File:   uart.c
+ * Author: juuso
+ *
+ * Sends messages to serial terminal in one second intervals.
+ * 
+ * Created on December 7, 2021, 4:05 PM
+ */
+
 #include <avr/io.h>
 #include "uart.h"
 #include "FreeRTOS.h"
