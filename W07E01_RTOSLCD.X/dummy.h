@@ -12,7 +12,7 @@
 extern "C" {
 #endif
 
-
+void dummy_task();
 
 
 #ifdef	__cplusplus

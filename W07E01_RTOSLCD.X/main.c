@@ -1,7 +1,15 @@
 /*
  * File:   main.c
  * Author: juuso
- *
+ * Email: juuso.pyyk@gmail.com
+ * 
+ * Exercise for a university course, DTEK0068
+ * 
+ * Week 7 exercise 1, W07E01
+ * 
+ * 
+ * 
+ * 
  * Created on December 7, 2021, 4:02 PM
  */
 #include <avr/io.h>
@@ -9,15 +17,14 @@
 #include "FreeRTOSConfig.h"
 #include "clock_config.h"
 #include "task.h"
-#include "timers.h"
 
 #include "uart.h"
 #include "adc.h"
 #include "backlight.h"
-#include "lcd.h"
 #include "display.h"
 #include "scroller.h"
 #include "adc0values.h"
+#include "dummy.h"
 
 
 int main(void)
@@ -70,6 +77,14 @@ int main(void)
                 configMINIMAL_STACK_SIZE,
                 NULL,
                 tskIDLE_PRIORITY,
+                NULL
+               );
+    xTaskCreate(
+                dummy_task,
+                "dummy_task",
+                configMINIMAL_STACK_SIZE,
+                NULL,
+                2,
                 NULL
                );
     
